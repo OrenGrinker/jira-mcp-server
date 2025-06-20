@@ -244,17 +244,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Documentation**: Check the README and inline code documentation
 - **Community**: Join discussions in GitHub Discussions
 
-## 🎯 Roadmap
-
-- [ ] WebSocket support for real-time updates
-- [ ] Advanced JQL query builder
-- [ ] Issue template support
-- [ ] Bulk operations
-- [ ] Custom field support
-- [ ] Agile/Sprint management tools
-- [ ] Dashboard and reporting features
-- [ ] Integration with other Atlassian products
-
----
-
-**Happy automating with Jira MCP Server!** 🚀
