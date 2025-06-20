@@ -46,29 +46,31 @@ LOG_LEVEL=INFO  # Optional: ERROR, WARN, INFO, DEBUG
 
 ```bash
 # Run directly without installation
-npx jira-mcp-server
+npx @orengrinker/jira-mcp-server
 
 # With environment variables
 JIRA_BASE_URL=https://company.atlassian.net \
 JIRA_EMAIL=user@company.com \
 JIRA_API_TOKEN=your-token \
-npx jira-mcp-server
+npx @orengrinker/jira-mcp-server
 ```
 
-### Option 2: MCP Configuration
+### Option 2: Claude Desktop Configuration
 
-Add to your `mcp.json` configuration:
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
-  "Jira MCP Server": {
-    "command": "npx",
-    "args": ["jira-mcp-server"],
-    "env": {
-      "JIRA_BASE_URL": "https://your-company.atlassian.net",
-      "JIRA_EMAIL": "your-email@company.com",
-      "JIRA_API_TOKEN": "your-jira-api-token",
-      "LOG_LEVEL": "INFO"
+  "mcpServers": {
+    "jira": {
+      "command": "npx",
+      "args": ["@orengrinker/jira-mcp-server"],
+      "env": {
+        "JIRA_BASE_URL": "https://your-company.atlassian.net",
+        "JIRA_EMAIL": "your-email@company.com",
+        "JIRA_API_TOKEN": "your-jira-api-token",
+        "LOG_LEVEL": "INFO"
+      }
     }
   }
 }
@@ -77,8 +79,18 @@ Add to your `mcp.json` configuration:
 ### Option 3: Global Installation
 
 ```bash
-npm install -g jira-mcp-server
+npm install -g @orengrinker/jira-mcp-server
 jira-mcp-server
+```
+
+### Option 4: Local Development
+
+```bash
+git clone https://github.com/OrenGrinker/jira-mcp-server.git
+cd jira-mcp-server
+npm install
+npm run build
+node dist/index.js
 ```
 
 ## 🧰 Available Tools
@@ -114,30 +126,40 @@ jira-mcp-server
 
 ## 💡 Usage Examples
 
+### Natural Language Commands with Claude
+
+Once configured with Claude Desktop, you can use natural language commands:
+
+```
+"Show me all my open issues in high priority"
+"Create a new bug in PROJECT-X about login issues"
+"Move ticket ABC-123 to In Progress"
+"Log 2 hours of work on ABC-456 for code review"
+"Add a comment to ABC-789 saying the fix is deployed"
+"Show me all Scrum boards for the mobile project"
+"Get details for issue ABC-100 including comments and worklogs"
+"List all projects I have access to"
+```
+
 ### Using with MCP Inspector
 
 ```bash
 # List all boards
 npx @modelcontextprotocol/inspector \
-  --cli "npx jira-mcp-server" \
-  --method tools/call \
-  --tool-name get_boards
+  npx @orengrinker/jira-mcp-server \
+  get_boards
 
 # Search for your issues
 npx @modelcontextprotocol/inspector \
-  --cli "npx jira-mcp-server" \
-  --method tools/call \
-  --tool-name search_issues \
-  --tool-arg jql="assignee=currentUser() AND status!=Done"
+  npx @orengrinker/jira-mcp-server \
+  search_issues \
+  '{"jql": "assignee=currentUser() AND status!=Done"}'
 
 # Create a new issue
 npx @modelcontextprotocol/inspector \
-  --cli "npx jira-mcp-server" \
-  --method tools/call \
-  --tool-name create_issue \
-  --tool-arg projectKey="PROJ" \
-  --tool-arg issueType="Task" \
-  --tool-arg summary="New task from MCP"
+  npx @orengrinker/jira-mcp-server \
+  create_issue \
+  '{"projectKey": "PROJ", "issueType": "Task", "summary": "New task from MCP"}'
 ```
 
 ### JQL Query Examples
@@ -157,7 +179,32 @@ duedate >= startOfWeek() AND duedate <= endOfWeek()
 
 # Unassigned issues in current sprint
 assignee is EMPTY AND sprint in openSprints()
+
+# Issues updated in the last 24 hours
+updated >= -1d
+
+# Epic issues with their child stories
+"Epic Link" = PROJ-123 OR parent = PROJ-123
 ```
+
+## 🔧 Configuration
+
+### Getting Your Jira API Token
+
+1. Go to [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
+2. Click "Create API token"
+3. Give it a descriptive name (e.g., "MCP Server")
+4. Copy the generated token
+5. Use it in your environment variables
+
+### Permissions Required
+
+Your Jira user should have:
+- Browse projects permission
+- Create issues permission (for issue creation)
+- Edit issues permission (for updates and transitions)
+- Work on issues permission (for worklogs)
+- Add comments permission
 
 ## 🏗️ Development
 
@@ -174,13 +221,9 @@ npm install
 ```bash
 npm run dev          # Start development server with hot reload
 npm run build        # Build for production
-npm run test         # Run tests
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Run tests with coverage
-npm run lint         # Run ESLint
-npm run lint:fix     # Fix ESLint issues
-npm run format       # Format code with Prettier
-npm run validate     # Run all checks (format, lint, test)
+npm run clean        # Clean build directory
+npm run start        # Start production server
+npm run test         # Run tests (when available)
 ```
 
 ### Project Structure
@@ -207,6 +250,46 @@ src/
     └── formatters.ts    # Response formatting
 ```
 
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **Authentication Failed**
+   - Verify your API token and email are correct
+   - Check that your Jira base URL is correct (should end with .atlassian.net for cloud)
+   - Ensure your API token hasn't expired
+
+2. **Permission Denied**
+   - Verify your Jira user has the required permissions
+   - Check project-level permissions for specific operations
+
+3. **Network Errors**
+   - Verify your Jira base URL is accessible
+   - Check firewall and proxy settings
+   - Ensure you're using HTTPS
+
+4. **Rate Limiting**
+   - The server includes built-in rate limiting
+   - If you hit Jira's rate limits, wait and retry
+   - Consider reducing concurrent requests
+
+### Debug Mode
+
+Enable debug logging:
+```bash
+export LOG_LEVEL=DEBUG
+```
+
+## 🧪 Testing
+
+```bash
+# Test the server connection
+JIRA_BASE_URL=https://your-company.atlassian.net \
+JIRA_EMAIL=your@email.com \
+JIRA_API_TOKEN=your-token \
+node dist/index.js
+```
+
 ## 🤝 Contributing
 
 We welcome contributions! Please follow these guidelines:
@@ -215,7 +298,7 @@ We welcome contributions! Please follow these guidelines:
 2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
 3. **Make your changes** following our coding standards
 4. **Add tests** for new functionality
-5. **Run validation**: `npm run validate`
+5. **Run the build**: `npm run build`
 6. **Commit changes**: `git commit -m 'Add amazing feature'`
 7. **Push to branch**: `git push origin feature/amazing-feature`
 8. **Open a Pull Request**
@@ -223,10 +306,24 @@ We welcome contributions! Please follow these guidelines:
 ### Coding Standards
 
 - Follow TypeScript best practices
-- Use ESLint and Prettier configurations
-- Write comprehensive tests
+- Use meaningful variable and function names
 - Add JSDoc comments for public APIs
 - Follow conventional commit messages
+- Ensure all builds pass
+
+## 📊 Performance
+
+- **Rate Limiting**: Built-in rate limiting respects Jira API limits
+- **Connection Pooling**: Efficient HTTP connection management
+- **Error Recovery**: Automatic retry logic for transient failures
+- **Memory Efficient**: Streaming responses for large datasets
+
+## 🔐 Security
+
+- **No Credential Storage**: Uses environment variables only
+- **Input Validation**: All inputs are validated and sanitized
+- **Secure Defaults**: Follows security best practices
+- **Audit Trail**: Comprehensive logging for debugging
 
 ## 📄 License
 
@@ -234,13 +331,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- [Jira Cloud REST API Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
-- [Model Context Protocol Specification](https://modelcontextprotocol.io/)
-- [Creating Jira API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+- **GitHub Repository**: [https://github.com/OrenGrinker/jira-mcp-server](https://github.com/OrenGrinker/jira-mcp-server)
+- **NPM Package**: [@orengrinker/jira-mcp-server](https://www.npmjs.com/package/@orengrinker/jira-mcp-server)
+- **Jira Cloud REST API**: [Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
+- **Model Context Protocol**: [Specification](https://modelcontextprotocol.io/)
+- **Create API Tokens**: [Atlassian Guide](https://id.atlassian.com/manage-profile/security/api-tokens)
 
 ## 🆘 Support
 
 - **Issues**: [GitHub Issues](https://github.com/OrenGrinker/jira-mcp-server/issues)
-- **Documentation**: Check the README and inline code documentation
-- **Community**: Join discussions in GitHub Discussions
+- **Documentation**: Check this README and inline code documentation
+- **Feature Requests**: Open an issue with the "enhancement" label
 
+## 🏆 Acknowledgments
+
+- Built with the [Model Context Protocol SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- Inspired by the MCP community and best practices
+- Thanks to all contributors and users providing feedback

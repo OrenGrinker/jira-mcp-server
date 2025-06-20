@@ -1,5 +1,5 @@
 {
-  "name": "jira-mcp-server",
+  "name": "@orengrinker/jira-mcp-server",
   "version": "1.0.0",
   "description": "A comprehensive Model Context Protocol server for Jira integration with issue management, board operations, time tracking, and project management capabilities",
   "main": "dist/index.js",
