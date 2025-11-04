@@ -5,7 +5,6 @@ A comprehensive, production-ready Model Context Protocol (MCP) server for seamle
 ## 🚀 Features
 
 ### Core Functionality
-
 - **Board Management**: List, filter, and manage Jira boards with detailed information
 - **Issue Operations**: Create, update, search, transition, and manage issues comprehensively
 - **User Management**: Search users, get user details, and manage assignments

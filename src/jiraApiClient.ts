@@ -164,14 +164,20 @@ export class JiraApiClient {
     fields?: string[];
     expand?: string[];
   } = {}): Promise<ApiResponse<any>> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('jql', jql);
-    if (params.maxResults) queryParams.append('maxResults', params.maxResults.toString());
-    if (params.startAt) queryParams.append('startAt', params.startAt.toString());
-    if (params.fields) queryParams.append('fields', params.fields.join(','));
-    if (params.expand) queryParams.append('expand', params.expand.join(','));
-    
-    return this.makeRequest(`/search?${queryParams}`, { useV3Api: true });
+    const body: any = {
+      jql,
+    };
+
+    if (params.maxResults) body.maxResults = params.maxResults;
+    if (params.startAt) body.startAt = params.startAt;
+    if (params.fields) body.fields = params.fields;
+    if (params.expand) body.expand = params.expand;
+
+    return this.makeRequest('/search/jql', {
+      method: 'POST',
+      body,
+      useV3Api: true
+    });
   }
 
   async getIssue(issueIdOrKey: string, params: {
