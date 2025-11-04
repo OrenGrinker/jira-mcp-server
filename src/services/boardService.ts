@@ -146,7 +146,8 @@ ${board.columnConfig.columns.map(col => `  - ${col.name} (${col.statuses.length}
 
       jql += ' ORDER BY updated DESC';
 
-      const response = await this.apiClient.searchIssues(jql, {
+      const response = await this.apiClient.getBoardIssues(params.boardId, {
+        jql,
         maxResults: params.maxResults || 50,
         fields: [
           'summary', 'status', 'assignee', 'priority', 'issuetype',
